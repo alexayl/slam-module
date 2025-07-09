@@ -1,10 +1,12 @@
 #include <zephyr/kernel.h>
+#include <zephyr/device.h>
 #include <stdlib.h>
 
 #include "imu.h"
 #include "lidar.h"
 #include "slam.h"
 #include "uart_comm.h"
+#include "hardware_intf.h"
 
 #define STACK_SIZE      2048
 
@@ -24,8 +26,11 @@ static struct k_thread lidar_thread_data;
 static struct k_thread slam_thread_data;
 static struct k_thread uart_thread_data;
 
+typedef bool (*init_func_t)(void);
+
 int main(void) {
 
+    app_hardware_init();
 
     k_thread_create(&imu_thread_data, imu_stack, STACK_SIZE,
                     imu_thread, NULL, NULL, NULL,
