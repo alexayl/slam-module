@@ -1,0 +1,6 @@
+menuconfig LIDAR_LITE_V4
+	bool "Enable Lidar Lite V4 support"
+	default y
+	select I2C
+	help
+	  Enable driver for Lidar Lite V4.
