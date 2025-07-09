@@ -1,0 +1,7 @@
+# python
+.venv
+.python-version
+
+# build
+/build*
+__pycache__/
