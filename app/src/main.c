@@ -1,47 +1,47 @@
-/*
- * Copyright (c) 2021 Nordic Semiconductor ASA
- * SPDX-License-Identifier: Apache-2.0
- */
-
 #include <zephyr/kernel.h>
-#include <zephyr/drivers/sensor.h>
+#include <stdlib.h>
 
-#define BLINK_PERIOD_MS_STEP 100U
-#define BLINK_PERIOD_MS_MAX  1000U
+#include "imu.h"
+#include "lidar.h"
+#include "slam.h"
+#include "uart_comm.h"
 
-int main(void)
-{
-	int ret;
-	unsigned int period_ms = BLINK_PERIOD_MS_MAX;
-	const struct device *sensor;
-	struct sensor_value last_val = { 0 }, val;
+#define STACK_SIZE      2048
 
-	sensor = DEVICE_DT_GET(DT_NODELABEL(example_sensor));
-	if (!device_is_ready(sensor)) {
-		printk("Sensor not ready");
-		return 0;
-	}
+#define IMU_PRIORITY     3
+#define LIDAR_PRIORITY   3
+#define SLAM_PRIORITY    2
+#define UART_PRIORITY    1
 
-	printk("Use the sensor to change LED blinking period\n");
 
-	while (1) {
-		ret = sensor_sample_fetch(sensor);
-		if (ret < 0) {
-			printk("Could not fetch sample (%d)", ret);
-			return 0;
-		}
+K_THREAD_STACK_DEFINE(imu_stack, STACK_SIZE);
+K_THREAD_STACK_DEFINE(lidar_stack, STACK_SIZE);
+K_THREAD_STACK_DEFINE(slam_stack, STACK_SIZE);
+K_THREAD_STACK_DEFINE(uart_stack, STACK_SIZE);
 
-		ret = sensor_channel_get(sensor, SENSOR_CHAN_PROX, &val);
-		if (ret < 0) {
-			printk("Could not get sample (%d)", ret);
-			return 0;
-		}
+static struct k_thread imu_thread_data;
+static struct k_thread lidar_thread_data;
+static struct k_thread slam_thread_data;
+static struct k_thread uart_thread_data;
 
-		last_val = val;
+int main(void) {
 
-		k_sleep(K_MSEC(100));
-	}
 
-	return 0;
+    k_thread_create(&imu_thread_data, imu_stack, STACK_SIZE,
+                    imu_thread, NULL, NULL, NULL,
+                    IMU_PRIORITY, 0, K_NO_WAIT);
+
+    k_thread_create(&lidar_thread_data, lidar_stack, STACK_SIZE,
+                    lidar_thread, NULL, NULL, NULL,
+                    LIDAR_PRIORITY, 0, K_NO_WAIT);
+
+    k_thread_create(&slam_thread_data, slam_stack, STACK_SIZE,
+                    slam_thread, NULL, NULL, NULL,
+                    SLAM_PRIORITY, 0, K_NO_WAIT);
+
+    k_thread_create(&uart_thread_data, uart_stack, STACK_SIZE,
+                    uart_thread, NULL, NULL, NULL,
+                    UART_PRIORITY, 0, K_NO_WAIT);
+
+    return EXIT_SUCCESS;
 }
-

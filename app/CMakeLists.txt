@@ -1,13 +1,10 @@
-#-------------------------------------------------------------------------------
-# Zephyr Example Application
-#
-# Copyright (c) 2021 Nordic Semiconductor ASA
-# SPDX-License-Identifier: Apache-2.0
-
 cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(slam-module)
 
 project(app LANGUAGES C)
 
-target_sources(app PRIVATE src/main.c)
+file(GLOB SLAM_MODULE_SOURCES "src/*.c")
+
+target_sources(app PRIVATE ${SLAM_MODULE_SOURCES})
+target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
