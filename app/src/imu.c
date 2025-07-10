@@ -6,7 +6,23 @@
 #include "hardware_intf.h"
 #include "imu.h"
 
-#define DEBUG_IMU
+// Shared IMU data structure
+imu_data_t shared_imu_data = {0};
+K_MUTEX_DEFINE(imu_data_mutex);
+
+bool get_latest_imu_data(imu_data_t *data) {
+    if (k_mutex_lock(&imu_data_mutex, K_MSEC(10)) == 0) {
+        if (shared_imu_data.data_ready) {
+            *data = shared_imu_data;
+            k_mutex_unlock(&imu_data_mutex);
+            return true;
+        }
+        k_mutex_unlock(&imu_data_mutex);
+    }
+    return false;
+}
+
+// #define DEBUG_IMU
 
 
 void imu_thread(void *arg1, void *arg2, void *arg3) {
@@ -33,6 +49,19 @@ void imu_thread(void *arg1, void *arg2, void *arg3) {
                         &temperature);
         }
         if (rc == 0) {
+            // Update shared data structure
+            if (k_mutex_lock(&imu_data_mutex, K_MSEC(1)) == 0) {
+                // Copy new data to shared structure
+                for (int i = 0; i < 3; i++) {
+                    shared_imu_data.accel[i] = accel[i];
+                    shared_imu_data.gyro[i] = gyro[i];
+                }
+                shared_imu_data.temperature = temperature;
+                shared_imu_data.data_ready = true;
+                k_mutex_unlock(&imu_data_mutex);
+            }
+            
+
             #ifdef DEBUG_IMU
             printk("%g Cel\n"
                 "  accel %f %f %f m/s/s\n"
@@ -45,13 +74,14 @@ void imu_thread(void *arg1, void *arg2, void *arg3) {
                 sensor_value_to_double(&gyro[1]),
                 sensor_value_to_double(&gyro[2]));
             #endif
-        } else {
-            #ifdef DEBUG_IMU
-            printk("sample fetch/get failed: %d\n", rc);
-            #endif
         }
+        #ifdef DEBUG_IMU
+        else {
+            printk("sample fetch/get failed: %d\n", rc);
+        }
+        #endif
 
-        k_sleep(K_MSEC(100)); // Sleep for 100 milliseconds
+        k_sleep(K_MSEC(SAMPLE_PERIOD_MSEC)); // Sleep for 10 milliseconds
 
     }
 
