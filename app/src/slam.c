@@ -38,14 +38,12 @@ void slam_thread(void *arg1, void *arg2, void *arg3) {
             }};
 
             FusionAhrsUpdateNoMagnetometer(&ahrs, gyroscope, accelerometer, SAMPLE_PERIOD_SEC);
-
+            const FusionVector earth = FusionAhrsGetEarthAcceleration(&ahrs);
             const FusionEuler euler = FusionQuaternionToEuler(FusionAhrsGetQuaternion(&ahrs));
 
-            if ((counter %= 40) == 0) { // Print every 10 iterations
-                printk("Roll %0.1f, Pitch %0.1f, Yaw %0.1f\n", 
-                   (double)euler.angle.roll, 
-                   (double)euler.angle.pitch, 
-                   (double)euler.angle.yaw);
+            if ((counter %= 40) == 0) { // Print every 40 iterations
+                // printk("Roll %0.1f, Pitch %0.1f, Yaw %0.1f\n", euler.angle.roll, euler.angle.pitch, euler.angle.yaw);
+                printk("X %0.1f, Y %0.1f, Z %0.1f\n", earth.axis.x, earth.axis.y, earth.axis.z);
             }
             counter++;
         }

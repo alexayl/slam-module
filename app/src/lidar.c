@@ -6,7 +6,7 @@
 #include "hardware_intf.h"
 #include "lidar.h"
 
-#define DEBUG_LIDAR
+// #define DEBUG_LIDAR
 
 void lidar_thread(void *arg1, void *arg2, void *arg3) {
 
