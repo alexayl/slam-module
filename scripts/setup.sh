@@ -7,6 +7,10 @@ west update
 # 0.1. Update git submodules
 git submodule update --init --recursive
 
+# 0.2. Fetch Espressif HAL blobs
+echo "Fetching Espressif HAL blobs..."
+west blobs fetch hal_espressif
+
 # Determine the script's location to make it runnable from anywhere
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 APP_DIR=$(dirname "$SCRIPT_DIR")
